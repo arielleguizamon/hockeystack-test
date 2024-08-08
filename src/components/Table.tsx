@@ -1,22 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { DataItem, FormattedData } from "@/types";
+import { useSortedData, usePaginatedData } from "@/app/hooks/useTableData";
+import { humanReadableHeaders } from "@/app/constants/tableConfig";
+
+const rowsPerPage = 10;
 
 type TableProps = {
   data: FormattedData[];
-};
-const percentageFields = new Set(["avgScrollPercentage", "bounceCount"]);
-
-const humanReadableHeaders: { [key in keyof DataItem]: string } = {
-  url: "URL",
-  totalCount: "Total",
-  totalVisitorCount: "Visitors",
-  bounceCount: "Bounce",
-  startsWithCount: "Enters",
-  endsWithCount: "Exits",
-  avgScrollPercentage: "Scroll",
-  totalPageviewCount: "Pageviews",
 };
 
 const Table: React.FC<TableProps> = ({ data }) => {
@@ -24,22 +16,29 @@ const Table: React.FC<TableProps> = ({ data }) => {
     key: keyof DataItem;
     sort: "asc" | "desc";
   } | null>(null);
-
   const [currentPage, setCurrentPage] = useState(1);
   const [inputPage, setInputPage] = useState("");
-  const rowsPerPage = 10;
 
-  const handleSort = (key: keyof DataItem) => {
-    setSortConfig((prevSortConfig) => {
-      return {
-        key,
-        sort:
-          prevSortConfig?.key === key && prevSortConfig.sort === "desc"
-            ? "asc"
-            : "desc",
-      };
-    });
-  };
+  const sortedData = useMemo(
+    () => useSortedData(data, sortConfig),
+    [data, sortConfig]
+  );
+  const paginatedData = useMemo(
+    () => usePaginatedData(sortedData, currentPage, rowsPerPage),
+    [sortedData, currentPage]
+  );
+
+  const totalPages = Math.ceil(sortedData.length / rowsPerPage);
+
+  const handleSort = useCallback((key: keyof DataItem) => {
+    setSortConfig((prevSortConfig) => ({
+      key,
+      sort:
+        prevSortConfig?.key === key && prevSortConfig.sort === "desc"
+          ? "asc"
+          : "desc",
+    }));
+  }, []);
 
   const handlePageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputPage(e.target.value);
@@ -52,36 +51,6 @@ const Table: React.FC<TableProps> = ({ data }) => {
     }
     setInputPage("");
   };
-
-  const sortedData = sortConfig
-    ? [...data].sort((a, b) => {
-        let valueA = a[sortConfig.key];
-        let valueB = b[sortConfig.key];
-
-        // handle percentage fields
-        if (
-          percentageFields.has(sortConfig.key) &&
-          typeof valueA === "string" &&
-          typeof valueB === "string"
-        ) {
-          valueA = parseFloat(valueA.replace("%", ""));
-          valueB = parseFloat(valueB.replace("%", ""));
-        }
-
-        if (valueA === valueB) return 0;
-
-        if (sortConfig.sort === "asc") {
-          return valueA < valueB ? -1 : 1;
-        } else {
-          return valueA > valueB ? -1 : 1;
-        }
-      })
-    : data;
-
-  const startIndex = (currentPage - 1) * rowsPerPage;
-  const paginatedData = sortedData.slice(startIndex, startIndex + rowsPerPage);
-
-  const totalPages = Math.ceil(sortedData.length / rowsPerPage);
 
   const handlePrevPage = () => {
     setCurrentPage((prevPage) => Math.max(prevPage - 1, 1));
@@ -98,6 +67,7 @@ const Table: React.FC<TableProps> = ({ data }) => {
           onClick={handlePrevPage}
           disabled={currentPage === 1}
           className="text-white disabled:opacity-50"
+          aria-label="Previous Page"
         >
           {"<"}
         </button>
@@ -108,6 +78,7 @@ const Table: React.FC<TableProps> = ({ data }) => {
           onClick={handleNextPage}
           disabled={currentPage === totalPages}
           className="text-white disabled:opacity-50"
+          aria-label="Next Page"
         >
           {">"}
         </button>

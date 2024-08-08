@@ -28,7 +28,10 @@ const Table: React.FC<TableProps> = ({ data }) => {
     [sortedData, currentPage]
   );
 
-  const totalPages = Math.ceil(sortedData.length / rowsPerPage);
+  const totalPages = useMemo(
+    () => Math.ceil(sortedData.length / rowsPerPage),
+    [sortedData]
+  );
 
   const handleSort = useCallback((key: keyof DataItem) => {
     setSortConfig((prevSortConfig) => ({
@@ -44,21 +47,21 @@ const Table: React.FC<TableProps> = ({ data }) => {
     setInputPage(e.target.value);
   };
 
-  const handlePageInputSubmit = () => {
+  const handlePageInputSubmit = useCallback(() => {
     const pageNumber = Math.max(1, Math.min(totalPages, Number(inputPage)));
     if (!isNaN(pageNumber)) {
       setCurrentPage(pageNumber);
     }
     setInputPage("");
-  };
+  }, [inputPage, totalPages]);
 
-  const handlePrevPage = () => {
+  const handlePrevPage = useCallback(() => {
     setCurrentPage((prevPage) => Math.max(prevPage - 1, 1));
-  };
+  }, []);
 
-  const handleNextPage = () => {
+  const handleNextPage = useCallback(() => {
     setCurrentPage((prevPage) => Math.min(prevPage + 1, totalPages));
-  };
+  }, [totalPages]);
 
   return (
     <div className="overflow-x-auto">
@@ -98,39 +101,54 @@ const Table: React.FC<TableProps> = ({ data }) => {
         </button>
       </div>
       <table className="table w-full">
-        <thead>
-          <tr>
-            {Object.keys(data[0]).map((key) => (
-              <th
-                key={key}
-                className={`uppercase h-20 bg-gray-900 w-1/12 ${
-                  key !== "url" ? "cursor-pointer" : ""
-                }`}
-                onClick={() =>
-                  key !== "url" && handleSort(key as keyof DataItem)
-                }
-              >
-                {humanReadableHeaders[key as keyof DataItem]}
-                {sortConfig?.key === key &&
-                  (sortConfig.sort === "asc" ? " ▲" : " ▼")}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {paginatedData.map((item, index) => (
-            <tr key={index} className="hover:bg-gray-700 h-20">
-              {Object.entries(item).map(([key, value]) => (
-                <td key={key} className="max-w-xs break-words ">
-                  {value}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
+        <TableHeader
+          data={data}
+          sortConfig={sortConfig}
+          handleSort={handleSort}
+        />
+        <TableBody paginatedData={paginatedData} />
       </table>
     </div>
   );
 };
+
+const TableHeader: React.FC<{
+  data: FormattedData[];
+  sortConfig: { key: keyof DataItem; sort: "asc" | "desc" } | null;
+  handleSort: (key: keyof DataItem) => void;
+}> = ({ data, sortConfig, handleSort }) => (
+  <thead>
+    <tr>
+      {Object.keys(data[0]).map((key) => (
+        <th
+          key={key}
+          className={`uppercase h-20 bg-gray-900 max-w-xs ${
+            key !== "url" ? "cursor-pointer" : ""
+          }`}
+          onClick={() => key !== "url" && handleSort(key as keyof DataItem)}
+        >
+          {humanReadableHeaders[key as keyof DataItem]}
+          {sortConfig?.key === key && (sortConfig.sort === "asc" ? " ▲" : " ▼")}
+        </th>
+      ))}
+    </tr>
+  </thead>
+);
+
+const TableBody: React.FC<{ paginatedData: FormattedData[] }> = ({
+  paginatedData,
+}) => (
+  <tbody>
+    {paginatedData.map((item, index) => (
+      <tr key={index} className="hover:bg-gray-700 h-20">
+        {Object.entries(item).map(([key, value]) => (
+          <td key={key} className="max-w-xs break-words ">
+            {value}
+          </td>
+        ))}
+      </tr>
+    ))}
+  </tbody>
+);
 
 export default Table;

@@ -1,7 +1,7 @@
-import Table from "@/components/Table";
+import LibraryTable from "@/components/LibraryTable";
 import { formatData } from "@/app/utils";
 import { AnalyticsResponse } from "@/types";
-import "./globals.css";
+import "@/app/globals.css";
 
 const Page = async () => {
   // Change to environment variable based URL. Harcoded localhost for faster development process.
@@ -11,9 +11,11 @@ const Page = async () => {
   const formattedData = formatData(data.analytics);
   return (
     <div className="container mx-auto p-4 my-8">
-      <h1 className="text-4xl font-extrabold mb-8">Hockeystack</h1>
+      <h1 className="text-4xl font-extrabold mb-8">
+        Hockeystack (Library Table)
+      </h1>
       {formattedData.length > 0 ? (
-        <Table data={formattedData} />
+        <LibraryTable data={formattedData} />
       ) : (
         <p>No data available</p>
       )}

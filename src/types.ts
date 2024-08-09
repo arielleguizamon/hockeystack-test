@@ -19,3 +19,7 @@ export type FormattedData = {
   avgScrollPercentage: string;
   totalPageviewCount: number;
 };
+
+export type AnalyticsResponse = {
+  analytics: DataItem[];
+};

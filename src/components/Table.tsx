@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
-import { DataItem, FormattedData } from "@/types";
+import { FormattedData } from "@/types";
 import { useSortedData, usePaginatedData } from "@/app/hooks/useTableData";
 import { humanReadableHeaders } from "@/app/constants/tableConfig";
 
@@ -13,7 +13,7 @@ type TableProps = {
 
 const Table: React.FC<TableProps> = ({ data }) => {
   const [sortConfig, setSortConfig] = useState<{
-    key: keyof DataItem;
+    key: keyof FormattedData;
     sort: "asc" | "desc";
   } | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -33,7 +33,7 @@ const Table: React.FC<TableProps> = ({ data }) => {
     [sortedData]
   );
 
-  const handleSort = useCallback((key: keyof DataItem) => {
+  const handleSort = useCallback((key: keyof FormattedData) => {
     setSortConfig((prevSortConfig) => ({
       key,
       sort:
@@ -114,8 +114,8 @@ const Table: React.FC<TableProps> = ({ data }) => {
 
 const TableHeader: React.FC<{
   data: FormattedData[];
-  sortConfig: { key: keyof DataItem; sort: "asc" | "desc" } | null;
-  handleSort: (key: keyof DataItem) => void;
+  sortConfig: { key: keyof FormattedData; sort: "asc" | "desc" } | null;
+  handleSort: (key: keyof FormattedData) => void;
 }> = ({ data, sortConfig, handleSort }) => (
   <thead>
     <tr>
@@ -125,9 +125,11 @@ const TableHeader: React.FC<{
           className={`uppercase h-20 bg-gray-900 max-w-xs ${
             key !== "url" ? "cursor-pointer" : ""
           }`}
-          onClick={() => key !== "url" && handleSort(key as keyof DataItem)}
+          onClick={() =>
+            key !== "url" && handleSort(key as keyof FormattedData)
+          }
         >
-          {humanReadableHeaders[key as keyof DataItem]}
+          {humanReadableHeaders[key as keyof FormattedData]}
           {sortConfig?.key === key && (sortConfig.sort === "asc" ? " ▲" : " ▼")}
         </th>
       ))}

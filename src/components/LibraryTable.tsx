@@ -1,4 +1,3 @@
-import * as React from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import { humanReadableHeaders } from "@/app/constants/tableConfig";
 import { FormattedData } from "@/types";
@@ -29,7 +28,6 @@ const Table: React.FC<TableProps> = ({ data }) => {
   return (
     <div
       style={{
-        width: "100%",
         backgroundColor: "#f0f0f0",
         borderRadius: "8px",
       }}
